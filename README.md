@@ -91,6 +91,10 @@ npm run dev
 
 ---
 
-## Licenza
+## Licenza e Proprietà
 
-Questo progetto è open-source con licenza [MIT](https://opensource.org/licenses/MIT).
+Questo progetto è di proprietà di **Andilab S.r.l.**  
+Tutti i diritti sono riservati. Non è un progetto open-source e non può essere copiato, modificato o distribuito senza autorizzazione scritta di Andilab S.r.l.
+
+Il progetto è stato sviluppato da **Kevin Pacheco** per conto di Andilab S.r.l.
+Per i dettagli completi, vedere il file LICENSE.
