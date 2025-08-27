@@ -29,7 +29,7 @@ export default function Consulta() {
       })
 
       if (res.data.found) {
-        setRisultato('Segnalazione presente')
+        setRisultato('segnalazione presente')
       } else {
         setRisultato('Nessuna segnalazione presente')
       }
@@ -41,7 +41,7 @@ export default function Consulta() {
 
   return (
     <div style={{ textAlign: 'center' }}>
-      <p >Inserisci il codice fiscale da verificare</p>
+      <p style={{ color: '#524f98' }}>Inserisci il codice fiscale da verificare</p>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20px' }}>
         <input
@@ -87,8 +87,8 @@ export default function Consulta() {
               fontWeight: 600,
               width: '300px',
               textAlign: 'center',
-              background: risultato === 'Segnalazione registrata' ? '#fdecea' : '#e7f6ec',
-              color: risultato === 'Segnalazione registrata' ? '#cc2936' : '#1e8e3e',
+              background: risultato === 'segnalazione presente' ? '#fdecea' : '#e7f6ec',
+              color: risultato === 'segnalazione presente' ? '#cc2936' : '#1e8e3e',
             }}
           >
             {risultato}

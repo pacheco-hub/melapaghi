@@ -57,6 +57,8 @@ export default function SegnalaForm() {
   const [files, setFiles] = useState([])
   // Stato importo
   const [importo, setImporto] = useState('')
+  // Touched state for inputs
+  const [touched, setTouched] = useState({ cf: false })
 
   const [loading, setLoading] = useState(false)
   const [esito, setEsito] = useState(null)
@@ -120,6 +122,7 @@ export default function SegnalaForm() {
       setTel('')
       setCf('')
       setMotivo('morosita')
+      setTouched({ cf: false })
     } catch (err) {
       setErrori(err.response?.data?.errors ?? { _generic: ['Errore in invio'] })
     } finally {
@@ -227,6 +230,7 @@ export default function SegnalaForm() {
     if (!cfValid) return <div style={styles.helperBad}>Il CF deve essere alfanumerico (A–Z, 0–9).</div>
   }, [cfLen, cfValid])
 
+  // ---- LOGICA IMPORTO E TEL ----
   const isDisabled = !cfValid
 
   return (
@@ -241,10 +245,14 @@ export default function SegnalaForm() {
           <div style={styles.col}>
             <label style={styles.label}>Codice fiscale *</label>
             <input
-              style={styles.input}
+              style={{
+                ...styles.input,
+                borderColor: touched.cf ? (cfValid ? '#1e8e3e' : '#cc2936') : '#e6e8ef'
+              }}
               placeholder="RSSMRA80A01H501U"
               value={cfUpper}
               onChange={(e) => setCf(e.target.value)}
+              onFocus={() => setTouched(prev => ({ ...prev, cf: true }))}
               maxLength={32}
               inputMode="text"
               autoComplete="off"
@@ -400,7 +408,7 @@ export default function SegnalaForm() {
               value={tel}
               onChange={handleTelChange}
               inputMode="tel"
-              maxLength={12} // 13 digits + up to 3 dashes
+              maxLength={12}
             />
           </div>
         </div>
@@ -440,4 +448,4 @@ export default function SegnalaForm() {
           ))}
     </div>
   )
-}
+} 

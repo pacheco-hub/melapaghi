@@ -1,9 +1,14 @@
+<style>
+.logo-white {
+    filter: brightness(0) invert(1);
+}
+</style>
 <!-- Main-menu Strat -->
 <div class="mein-menu">
     <nav class="navbar navbar-expand-lg navbar-light ">
         <div class="container">
             <a class="navbar-brand" href="{{ route('home') }}">
-                <img src="{{ asset('assets/img/logo.png') }}" class="logo" alt="logo" style="height: 65px;">
+                <img src="{{ asset('assets/img/logo.png') }}" class="logo logo-white" alt="logo" style="height: 65px;">
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false"
