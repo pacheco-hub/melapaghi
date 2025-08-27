@@ -1,6 +1,10 @@
 import React, { useMemo, useState, useEffect } from 'react'
+import "react-datepicker/dist/react-datepicker.css";
 import Select from 'react-select'
 import axios from 'axios'
+import DatePicker from "react-datepicker";
+import { format } from 'date-fns'
+import { it } from 'date-fns/locale'
 
 function Toast({ message, type, onClose, duration }) {
   useEffect(() => {
@@ -57,6 +61,9 @@ export default function SegnalaForm() {
   const [files, setFiles] = useState([])
   // Stato importo
   const [importo, setImporto] = useState('')
+  // Date range state for periodo della locazione
+  const [range, setRange] = useState([null, null])
+  const [startDate, endDate] = range
   // Touched state for inputs
   const [touched, setTouched] = useState({ cf: false })
 
@@ -93,7 +100,7 @@ export default function SegnalaForm() {
       fd.append('nome', /* stato nome se lo aggiungi */ '')
       fd.append('cognome', '')
       fd.append('citta', '')
-      fd.append('periodo', '')
+      fd.append('periodo', (startDate && endDate) ? `${format(startDate, 'MM/yyyy')} - ${format(endDate, 'MM/yyyy')}` : '')
       fd.append('tipo_contratto', '')
       fd.append('motivo', motivo)
       fd.append('motivo_altro', '')          // se presente
@@ -123,6 +130,7 @@ export default function SegnalaForm() {
       setCf('')
       setMotivo('morosita')
       setTouched({ cf: false })
+      setRange([null, null])
     } catch (err) {
       setErrori(err.response?.data?.errors ?? { _generic: ['Errore in invio'] })
     } finally {
@@ -146,6 +154,13 @@ export default function SegnalaForm() {
     { value: 'danni', label: 'Danni materiali' },
     { value: 'altro', label: 'Altro (specificare)' }
   ]
+
+  // Lista anni per il DatePicker (ultimi 20 anni)
+  const years = useMemo(() => {
+    const now = new Date().getFullYear();
+    const span = 20; // last 20 years (inclusive)
+    return Array.from({ length: span + 1 }, (_, i) => now - i);
+  }, []);
 
   // ---- STILI ----
   const controlHeight = 46
@@ -198,6 +213,44 @@ export default function SegnalaForm() {
     sectionTitle: { fontSize: 18, fontWeight: 800, color: '#1f2d3d', marginTop: 14 }
   }
 
+  // Custom header per DatePicker: frecce cambiano ANNO, titolo è un select degli anni
+  const renderDpHeader = ({ date, changeYear, decreaseYear, increaseYear }) => {
+    const currentYear = new Date().getFullYear();
+    const isAtMaxYear = date.getFullYear() >= currentYear;
+    return (
+      <div className="melap-dp__headerbar">
+        <button
+          type="button"
+          className="melap-dp__nav"
+          onClick={decreaseYear}
+          aria-label="Anno precedente"
+        >
+          ‹
+        </button>
+        <div className="melap-dp__title">
+          <select
+            className="melap-dp__year"
+            value={date.getFullYear()}
+            onChange={(e) => changeYear(Number(e.target.value))}
+          >
+            {years.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
+        <button
+          type="button"
+          className="melap-dp__nav"
+          onClick={isAtMaxYear ? undefined : increaseYear}
+          aria-label="Anno successivo"
+          disabled={isAtMaxYear}
+        >
+          ›
+        </button>
+      </div>
+    );
+  }
+
   const customSelectStyles = {
     control: (provided, state) => ({
       ...provided,
@@ -233,8 +286,49 @@ export default function SegnalaForm() {
   // ---- LOGICA IMPORTO E TEL ----
   const isDisabled = !cfValid
 
+  const dpInputCss = `
+    .melap-date-wrapper { width: 100%; display: block; position: relative; }
+    .melap-date-input {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #e6e8ef;
+      border-radius: 12px;
+      padding: 12px 14px 12px 40px;
+      font-size: 16px;
+      outline: none;
+      background: #fbfbfe;
+      min-height: ${controlHeight}px;
+      display: block;
+      position: relative; /* establish stacking context under the icon */
+    }
+    .melap-date-wrapper .melap-date-icon {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      font-size: 18px; opacity: .65; pointer-events: none;
+      z-index: 2; /* make sure the icon sits above the input */
+    }
+    /* Calendar panel */
+    .melap-dp { border: 0; border-radius: 16px; box-shadow: 0 24px 48px rgba(20,23,38,.12); overflow: hidden; }
+    .melap-dp .react-datepicker__header { background: #f5f4ff; border-bottom: 1px solid rgba(20,23,38,.06); padding-top: 8px; }
+    .melap-dp__headerbar { display:flex; align-items:center; justify-content:space-between; padding: 8px 12px; }
+    .melap-dp__title { font-weight: 800; color: #1f2d3d; }
+    .melap-dp__nav { background: #ffffff; border: 1px solid rgba(20,23,38,.08); width:28px; height:28px; border-radius: 8px; cursor:pointer; }
+    .melap-dp__nav:hover { border-color: #ffbf00; }
+    .melap-dp__nav:disabled { opacity: .35; cursor: not-allowed; }
+    .melap-dp .react-datepicker__month { margin: 8px; }
+    .melap-dp .react-datepicker__month-text { border-radius: 10px; padding: 6px 8px; }
+    .melap-dp .react-datepicker__month-text:hover { background: #ffef99; }
+    .melap-dp .react-datepicker__month--selected, 
+    .melap-dp .react-datepicker__month-text--keyboard-selected, 
+    .melap-dp .react-datepicker__month-text--in-selecting-range,
+    .melap-dp .react-datepicker__month-text--in-range { background: #ffbf00 !important; color: #1f2d3d !important; }
+    .melap-dp .react-datepicker__triangle { display:none; }
+    .melap-dp__year { appearance: none; background:#fff; border:1px solid rgba(20,23,38,.12); border-radius:10px; padding:4px 10px; font-weight:700; cursor:pointer; }
+    .melap-dp__year:hover { border-color:#ffbf00; }
+  `
+
   return (
     <div style={styles.page}>
+      <style>{dpInputCss}</style>
       <div style={styles.card}>
         <div style={styles.header}>Segnala un inquilino</div>
         <div style={styles.helper}>Tutti i campi sono obbligatori</div>
@@ -289,7 +383,27 @@ export default function SegnalaForm() {
           </div>
           <div style={styles.col}>
             <label style={styles.label}>Periodo della locazione</label>
-            <input style={styles.input} placeholder="01/2023 - 06/2024" />
+            <div className="melap-date-wrapper">
+              <span className="melap-date-icon" aria-hidden>📅</span>
+              <DatePicker
+                selectsRange
+                startDate={startDate}
+                endDate={endDate}
+                onChange={(update) => setRange(update)}
+                dateFormat="MM/yyyy"
+                showMonthYearPicker
+                placeholderText="01/2023 - 06/2024"
+                className="melap-date-input"
+                wrapperClassName="melap-date-wrapper"
+                locale={it}
+                calendarClassName="melap-dp"
+                popperClassName="melap-dp-popper"
+                popperPlacement="bottom-start"
+                isClearable
+                shouldCloseOnSelect={false}
+                renderCustomHeader={renderDpHeader}
+              />
+            </div>
           </div>
         </div>
 

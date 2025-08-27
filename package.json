@@ -16,7 +16,9 @@
     },
     "dependencies": {
         "@vitejs/plugin-react": "^5.0.1",
+        "date-fns": "^4.1.0",
         "react": "^19.1.1",
+        "react-datepicker": "^8.7.0",
         "react-dom": "^19.1.1",
         "react-select": "^5.10.2"
     }
