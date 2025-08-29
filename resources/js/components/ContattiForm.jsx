@@ -1,3 +1,4 @@
+import LockButton from './ui/LockButton.jsx'
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -28,8 +29,8 @@ export default function ContattiForm() {
   const messageOk = form.message.trim().length >= 5;
   const valid = nameOk && emailOk && messageOk;
 
-  const submit = async e => {
-    e.preventDefault();
+  const submit = async (e) => {
+    if (e) e.preventDefault();
     if (!valid || busy) return;
 
     setBusy(true);
@@ -89,7 +90,7 @@ export default function ContattiForm() {
         </div>
       )}
 
-      <form onSubmit={submit} noValidate>
+      <form noValidate>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <input
             type="text"
@@ -133,19 +134,15 @@ export default function ContattiForm() {
             style={{ borderColor: messageOk ? 'green' : 'red' }}
           />
         </div>
-        <button
-          type="submit"
-          className="button button-1"
+        <LockButton
+          type="button"
+          onClick={submit}
           disabled={!valid || busy}
-          aria-busy={busy}
-          style={{
-            background: !valid ? '#d1d5db' : '',
-            color: !valid ? '#6b7280' : '',
-            cursor: !valid ? 'not-allowed' : 'pointer'
-          }}
-        >
-          {busy ? 'Invio in corso…' : (valid ? 'Invia Messaggio' : '🔒 Invia Messaggio')}
-        </button>
+          loading={busy}
+          fullWidth
+          text="Invia Messaggio"
+          lockedText="🔒 Invia Messaggio"
+        />
       </form>
     </div>
   );
