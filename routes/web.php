@@ -20,6 +20,8 @@ Route::view('/consulta', 'segnalazioni.consulta')
 Route::view('/contatti', 'contatti.contatti')
     ->name('contatti');
 
+    Route::view('/prova', 'prova')
+    ->name('prova');
 /*
 |--------------------------------------------------------------------------
 | Azioni Segnalazioni (controller)

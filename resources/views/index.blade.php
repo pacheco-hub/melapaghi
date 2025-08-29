@@ -1,7 +1,6 @@
 @extends('layouts.app')
 @section('title', 'Home')
 
-
 @section('banner')
     <!-- Banners Start -->
     <section class="banner" style="background-image: url('{{ asset('assets/img/banner-bg.png') }}')">
@@ -25,7 +24,7 @@
                     </div>
                     <div class="col-lg-5">
                         <div class="hero-form text-center">
-                            <a href="{{ route( 'segnalazioni.create') }}" rel="noopener noreferrer" class="button button-1 mb-3">Segnala un inquilino</a>
+                            <a href="{{ route( 'segnalazioni.create') }}" rel="noopener noreferrer" class="button button-1 mb-3">Segnala un moroso</a>
                             <a href="{{ route('segnalazioni.consulta' ) }}" class="button button-1">Consulta la segnalazione</a>
                         </div>
                     </div>
@@ -227,7 +226,7 @@
                                 </div>
                                 <div class="text-box">
                                     <span>Step 1</span>
-                                    <h4>Compila il modulo con i dati dell’inquilino</h4>
+                                    <h4>Compila il modulo con i dati del moroso</h4>
                                 </div>
                             </div>
                             <div class="install">
@@ -251,7 +250,7 @@
                         </div>
                     <div class="install mt-4">
                             <div class="text-box text-center w-100">
-                                <a href=" {{ route('segnalazioni.create')}}"  class="button button-1 w-100">Segnala un inquilino</a>
+                                <a href=" {{ route('segnalazioni.create')}}"  class="button button-1 w-100">Segnala un moroso</a>
                             </div>
                         </div>
                     </div>
@@ -334,7 +333,7 @@
                                 <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne"
                                     data-bs-parent="#accordionExample">
                                     <div class="accordion-body">
-                                        Compili un modulo con i dati dell’inquilino, alleghi prove documentali e invii la segnalazione. Dopo una verifica, viene eventualmente pubblicata.
+                                        Compili un modulo con i dati del moroso, alleghi prove documentali e invii la segnalazione. Dopo una verifica, viene eventualmente pubblicata.
                                     </div>
                                 </div>
                             </div>

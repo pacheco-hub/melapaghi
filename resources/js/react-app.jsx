@@ -11,6 +11,4 @@ const consultaRoot = document.getElementById('react-consulta')
 if (consultaRoot) createRoot(consultaRoot).render(<Consulta />)
 
 const contattiRoot = document.getElementById('react-contatti');
-if (contattiRoot) {
-  createRoot(contattiRoot).render(<ContattiForm />);
-}
+if (contattiRoot) createRoot(contattiRoot).render(<ContattiForm />);

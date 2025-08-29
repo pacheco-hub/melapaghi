@@ -1,54 +1,14 @@
-import React, { useMemo, useState, useEffect } from 'react'
-import "react-datepicker/dist/react-datepicker.css";
+import React, { useMemo, useState } from 'react'
 import Select from 'react-select'
 import axios from 'axios'
-import DatePicker from "react-datepicker";
-import { format } from 'date-fns'
-import { it } from 'date-fns/locale'
-
-function Toast({ message, type, onClose, duration }) {
-  useEffect(() => {
-    if (!duration) return
-    const timer = setTimeout(() => {
-      onClose()
-    }, duration)
-    return () => clearTimeout(timer)
-  }, [duration, onClose])
-
-  const baseStyle = {
-    position: 'fixed',
-    bottom: 20,
-    right: 20,
-    padding: '12px 20px',
-    borderRadius: 8,
-    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-    zIndex: 9999,
-    maxWidth: 320,
-    fontWeight: 600,
-    fontSize: 14,
-    cursor: 'pointer',
-    userSelect: 'none'
-    // Removed color: '#fff', typeStyles will set color
-  }
-
-  // Updated to match ContattiForm
-  const typeStyles = {
-    success: { background: '#e7f6ec', color: '#1e8e3e' },
-    error: { background: '#fdecea', color: '#cc2936' }
-  }
-
-  return (
-    <div
-      style={{ ...baseStyle, ...typeStyles[type] }}
-      onClick={onClose}
-      role="alert"
-      aria-live="assertive"
-      aria-atomic="true"
-    >
-      {message}
-    </div>
-  )
-}
+import { format, set } from 'date-fns'
+import TextField from './ui/TextField.jsx'
+import MoneyInput from './ui/MoneyInput.jsx'
+import PhoneInput from './ui/PhoneInput.jsx'
+import DateRangeMonthPicker from './ui/DateRangeMonthPicker.jsx'
+import Toast from './ui/Toast.jsx'
+import CfInput from './ui/CfInput.jsx'
+import LockButton from './ui/LockButton.jsx'
 
 export default function SegnalaForm() {
   // Stato "motivo"
@@ -64,30 +24,11 @@ export default function SegnalaForm() {
   // Date range state for periodo della locazione
   const [range, setRange] = useState([null, null])
   const [startDate, endDate] = range
-  // Touched state for inputs
-  const [touched, setTouched] = useState({ cf: false })
+  const [singleValue, setSingleValue] = useState(null)
 
   const [loading, setLoading] = useState(false)
   const [esito, setEsito] = useState(null)
   const [errori, setErrori] = useState(null)
-
-  // Handle phone input changes (auto-format: 3-3-4-3 as digits grow)
-  const handleTelChange = (e) => {
-    const digits = e.target.value.replace(/\D/g, '').slice(0, 10)
-    let formatted = digits
-    if (digits.length > 3 && digits.length <= 6) {
-      formatted = digits.slice(0, 3) + '-' + digits.slice(3)
-    } else if (digits.length > 6 ) {
-      formatted = digits.slice(0, 3) + '-' + digits.slice(3, 6) + '-' + digits.slice(6)
-    }
-    setTel(formatted)
-  }
-
-  // Handle importo input, numeric only, with euro symbol
-  const handleImportoChange = (e) => {
-    const digits = e.target.value.replace(/[^0-9]/g, '')
-    setImporto(digits ? `€${digits}` : '')
-  }
 
   const handleSubmit = async () => {
     if (!cfValid) return
@@ -129,7 +70,6 @@ export default function SegnalaForm() {
       setTel('')
       setCf('')
       setMotivo('morosita')
-      setTouched({ cf: false })
       setRange([null, null])
     } catch (err) {
       setErrori(err.response?.data?.errors ?? { _generic: ['Errore in invio'] })
@@ -154,13 +94,6 @@ export default function SegnalaForm() {
     { value: 'danni', label: 'Danni materiali' },
     { value: 'altro', label: 'Altro (specificare)' }
   ]
-
-  // Lista anni per il DatePicker (ultimi 20 anni)
-  const years = useMemo(() => {
-    const now = new Date().getFullYear();
-    const span = 20; // last 20 years (inclusive)
-    return Array.from({ length: span + 1 }, (_, i) => now - i);
-  }, []);
 
   // ---- STILI ----
   const controlHeight = 46
@@ -213,44 +146,6 @@ export default function SegnalaForm() {
     sectionTitle: { fontSize: 18, fontWeight: 800, color: '#1f2d3d', marginTop: 14 }
   }
 
-  // Custom header per DatePicker: frecce cambiano ANNO, titolo è un select degli anni
-  const renderDpHeader = ({ date, changeYear, decreaseYear, increaseYear }) => {
-    const currentYear = new Date().getFullYear();
-    const isAtMaxYear = date.getFullYear() >= currentYear;
-    return (
-      <div className="melap-dp__headerbar">
-        <button
-          type="button"
-          className="melap-dp__nav"
-          onClick={decreaseYear}
-          aria-label="Anno precedente"
-        >
-          ‹
-        </button>
-        <div className="melap-dp__title">
-          <select
-            className="melap-dp__year"
-            value={date.getFullYear()}
-            onChange={(e) => changeYear(Number(e.target.value))}
-          >
-            {years.map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-        </div>
-        <button
-          type="button"
-          className="melap-dp__nav"
-          onClick={isAtMaxYear ? undefined : increaseYear}
-          aria-label="Anno successivo"
-          disabled={isAtMaxYear}
-        >
-          ›
-        </button>
-      </div>
-    );
-  }
-
   const customSelectStyles = {
     control: (provided, state) => ({
       ...provided,
@@ -273,109 +168,60 @@ export default function SegnalaForm() {
   }
 
   // ---- LOGICA CF ----
-  const cfUpper = useMemo(() => cf.toUpperCase(), [cf])
-  const cfLen = cfUpper.trim().length
-  const cfValid = useMemo(() => /^[A-Z0-9]{16}$/.test(cfUpper.trim()), [cfUpper])
-  const cfMessageNode = useMemo(() => {
-    if (cfLen === 0) return null
-    if (cfLen < 16) return <div style={styles.helperBad}>Mancano {16 - cfLen} caratteri.</div>
-    if (cfLen > 16) return <div style={styles.helperBad}>Hai inserito {cfLen - 16} caratteri in più.</div>
-    if (!cfValid) return <div style={styles.helperBad}>Il CF deve essere alfanumerico (A–Z, 0–9).</div>
-  }, [cfLen, cfValid])
+  const cfValid = useMemo(
+    () => /^[A-Z0-9]{16}$/.test(cf.trim().toUpperCase()),
+    [cf]
+  )
 
   // ---- LOGICA IMPORTO E TEL ----
   const isDisabled = !cfValid
 
-  const dpInputCss = `
-    .melap-date-wrapper { width: 100%; display: block; position: relative; }
-    .melap-date-input {
-      width: 100%;
-      box-sizing: border-box;
-      border: 1px solid #e6e8ef;
-      border-radius: 12px;
-      padding: 12px 14px 12px 40px;
-      font-size: 16px;
-      outline: none;
-      background: #fbfbfe;
-      min-height: ${controlHeight}px;
-      display: block;
-      position: relative; /* establish stacking context under the icon */
-    }
-    .melap-date-wrapper .melap-date-icon {
-      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-      font-size: 18px; opacity: .65; pointer-events: none;
-      z-index: 2; /* make sure the icon sits above the input */
-    }
-    /* Calendar panel */
-    .melap-dp { border: 0; border-radius: 16px; box-shadow: 0 24px 48px rgba(20,23,38,.12); overflow: hidden; }
-    .melap-dp .react-datepicker__header { background: #f5f4ff; border-bottom: 1px solid rgba(20,23,38,.06); padding-top: 8px; }
-    .melap-dp__headerbar { display:flex; align-items:center; justify-content:space-between; padding: 8px 12px; }
-    .melap-dp__title { font-weight: 800; color: #1f2d3d; }
-    .melap-dp__nav { background: #ffffff; border: 1px solid rgba(20,23,38,.08); width:28px; height:28px; border-radius: 8px; cursor:pointer; }
-    .melap-dp__nav:hover { border-color: #ffbf00; }
-    .melap-dp__nav:disabled { opacity: .35; cursor: not-allowed; }
-    .melap-dp .react-datepicker__month { margin: 8px; }
-    .melap-dp .react-datepicker__month-text { border-radius: 10px; padding: 6px 8px; }
-    .melap-dp .react-datepicker__month-text:hover { background: #ffef99; }
-    .melap-dp .react-datepicker__month--selected, 
-    .melap-dp .react-datepicker__month-text--keyboard-selected, 
-    .melap-dp .react-datepicker__month-text--in-selecting-range,
-    .melap-dp .react-datepicker__month-text--in-range { background: #ffbf00 !important; color: #1f2d3d !important; }
-    .melap-dp .react-datepicker__triangle { display:none; }
-    .melap-dp__year { appearance: none; background:#fff; border:1px solid rgba(20,23,38,.12); border-radius:10px; padding:4px 10px; font-weight:700; cursor:pointer; }
-    .melap-dp__year:hover { border-color:#ffbf00; }
-  `
-
   return (
     <div style={styles.page}>
-      <style>{dpInputCss}</style>
       <div style={styles.card}>
-        <div style={styles.header}>Segnala un inquilino</div>
+        <div style={styles.header}>Segnala un moroso</div>
         <div style={styles.helper}>Tutti i campi sono obbligatori</div>
 
         {/* DATI INQUILINO */}
-        <div style={styles.sectionTitle}>Dati inquilino segnalato</div>
+        <div style={styles.sectionTitle}>Dati moroso segnalato</div>
         <div style={styles.row}>
           <div style={styles.col}>
-            <label style={styles.label}>Codice fiscale *</label>
-            <input
-              style={{
-                ...styles.input,
-                borderColor: touched.cf ? (cfValid ? '#1e8e3e' : '#cc2936') : '#e6e8ef'
-              }}
-              placeholder="RSSMRA80A01H501U"
-              value={cfUpper}
-              onChange={(e) => setCf(e.target.value)}
-              onFocus={() => setTouched(prev => ({ ...prev, cf: true }))}
-              maxLength={32}
-              inputMode="text"
-              autoComplete="off"
+            <CfInput
+              value={cf}
+              onChange={setCf}
+              styles={styles}
             />
-            {cfMessageNode}
           </div>
           <div style={styles.col}>
-            <label style={styles.label}>Importo danni</label>
-            <input
-              style={styles.input}
-              placeholder="€0"
+            <MoneyInput
+              label="Importo danni"
               value={importo}
-              onChange={handleImportoChange}
-              inputMode="numeric"
+              onValueChange={setImporto}
+              placeholder="€0"
+              labelStyle={styles.label}
+              inputStyle={styles.input}
             />
           </div>
         </div>
 
         <div style={styles.row}>
           <div style={styles.col}>
-            <label style={styles.label}>Nome</label>
-            <input style={styles.input} placeholder="Mario" />
+            <TextField
+              label="Nome"
+              placeholder="Mario"
+              labelStyle={styles.label}
+              inputStyle={styles.input}
+            />
           </div>
           <div style={styles.col}>
-            <label style={styles.label}>Cognome</label>
-            <input style={styles.input} placeholder="Rossi" />
+            <TextField
+              label="Cognome"
+              placeholder="Rossi"
+              labelStyle={styles.label}
+              inputStyle={styles.input}
+            />
           </div>
         </div>
-
         <div style={styles.row}>
           <div style={styles.col}>
             <label style={styles.label}>Città e provincia</label>
@@ -383,27 +229,12 @@ export default function SegnalaForm() {
           </div>
           <div style={styles.col}>
             <label style={styles.label}>Periodo della locazione</label>
-            <div className="melap-date-wrapper">
-              <span className="melap-date-icon" aria-hidden>📅</span>
-              <DatePicker
-                selectsRange
-                startDate={startDate}
-                endDate={endDate}
-                onChange={(update) => setRange(update)}
-                dateFormat="MM/yyyy"
-                showMonthYearPicker
-                placeholderText="01/2023 - 06/2024"
-                className="melap-date-input"
-                wrapperClassName="melap-date-wrapper"
-                locale={it}
-                calendarClassName="melap-dp"
-                popperClassName="melap-dp-popper"
-                popperPlacement="bottom-start"
-                isClearable
-                shouldCloseOnSelect={false}
-                renderCustomHeader={renderDpHeader}
-              />
-            </div>
+           <DateRangeMonthPicker
+              mode="range"
+              precision="month"
+              value={[startDate, endDate]}
+              onChange={setRange}
+            />
           </div>
         </div>
 
@@ -500,12 +331,20 @@ export default function SegnalaForm() {
 
         <div style={styles.row}>
           <div style={styles.col}>
-            <label style={styles.label}>Nome</label>
-            <input style={styles.input} placeholder="Mario" />
+            <TextField
+              label="Nome"
+              placeholder="Mario"
+              labelStyle={styles.label}
+              inputStyle={styles.input}
+            />
           </div>
-          <div style={styles.col}>
-            <label style={styles.label}>Cognome</label>
-            <input style={styles.input} placeholder="Rossi" />
+         <div style={styles.col}>
+            <TextField
+              label="Cognome"
+              placeholder="Rossi"
+              labelStyle={styles.label}
+              inputStyle={styles.input}
+            />
           </div>
         </div>
 
@@ -515,14 +354,13 @@ export default function SegnalaForm() {
             <input style={styles.input} placeholder="mario.rossi@email.it" />
           </div>
           <div style={styles.col}>
-            <label style={styles.label}>Telefono</label>
-            <input
-              style={styles.input}
-              placeholder="Inserisci numero di telefono"
+            <PhoneInput
+              label="Telefono"
               value={tel}
-              onChange={handleTelChange}
-              inputMode="tel"
-              maxLength={12}
+              onValueChange={setTel}
+              placeholder="Inserisci numero di telefono"
+              labelStyle={styles.label}
+              inputStyle={styles.input}
             />
           </div>
         </div>
@@ -535,9 +373,15 @@ export default function SegnalaForm() {
         </div>
 
         <div style={styles.buttonWrap}>
-          <button type="button" style={isDisabled ? styles.buttonDisabled : styles.button} disabled={isDisabled || loading} onClick={handleSubmit}>
-            {isDisabled ? '🔒 Invia segnalazione' : (loading ? 'Invio…' : 'Invia segnalazione')}
-          </button>
+          <LockButton
+            onClick={handleSubmit}
+            disabled={isDisabled || loading}
+            loading={loading}
+            fullWidth
+            label="Invia segnalazione"
+            text="Invia Segnalazione"
+            lockedText="🔒 Invia Segnalazione"
+          />
         </div>
       </div>
       {esito && (
@@ -562,4 +406,4 @@ export default function SegnalaForm() {
           ))}
     </div>
   )
-} 
+}
